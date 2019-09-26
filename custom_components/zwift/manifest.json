@@ -1,0 +1,8 @@
+{
+  "domain": "zwift",
+  "name": "Zwift Sensor",
+  "documentation": "",
+  "requirements": ["zwift-client==0.2.0"],
+  "dependencies": [],
+  "codeowners": ["snicker"]
+}
