@@ -50,6 +50,11 @@ ZWIFT_PLATFORM_INFO = {
     'XP_PER_LEVEL': [0, 1000, 2000, 3000, 4000, 5000, 7000, 10000, 13000, 16000, 19000, 23000, 28000, 33000, 38000, 44000, 50000, 56000, 62000, 70000, 78000, 88000, 94000, 100000, 110000, 121000, 130000, 140000, 150000, 170000, 180000, 190000, 200000, 220000, 230000, 250000, 260000, 280000, 290000, 310000, 330000, 340000, 360000, 380000, 400000, 420000, 440000, 460000, 480000, 500000]
 }
 
+ZWIFT_IGNORED_PROFILE_ATTRIBUTES = [
+    'privateAttributes',
+    'publicAttributes'
+]
+
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_USERNAME): cv.string,
     vol.Required(CONF_PASSWORD): cv.string,
@@ -165,7 +170,8 @@ class ZwiftSensorDevice(Entity):
         """Get the latest data from the sensor."""
         self._state = getattr(self._player,self._type)
         if self._type == 'online':
-            self._attrs.update(self._player.player_profile)
+            p = self._player.player_profile
+            self._attrs.update({k: p[k] for k in p if k not in ZWIFT_IGNORED_PROFILE_ATTRIBUTES})
         
     async def async_added_to_hass(self):
         """Register update signal handler."""
