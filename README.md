@@ -23,3 +23,32 @@ sensor:
 ```
 
 3. Restart HomeAssistant
+
+Events
+===
+
+This integration will emit the following events:
+
+## `zwift_ride_on`
+
+When an online player recieves a "Ride on!" from another player, this event will be omitted with the following data:
+
+```
+player_id: <the tracked player id recieving the ride on>
+rideons: <the total number of ride ons recieved on the current ride>
+```
+
+This information can also be accessed from the `latest_activity` attribute on the `zwift_online_<playerid>` sensor in a template sensor if necessary:
+
+`{{ state_attr('sensor.zwift_online_<playerid>','latest_activity').activityRideOnCount }}`
+
+Attributes
+===
+
+The `sensor.zwift_online_<playerid>` is populated with a very large mess of attributes that come from the profile data in the Zwift API as well as the latest activity data. Users are encouraged to explore this data and decide what to do with it, but some examples of useful information found in these attributes are below. This information can be used to create template sensors within HomeAssistant or used to trigger automations.
+
+* Number of followers
+* Number of ride ons recieved on last/current ride
+* Distance/Wattage/Elevation/Length/Calories/Title/Start&End Date of the last/current activity
+* Total all time statistics (watt hours, distance, elevation etc)
+* Current FTP
