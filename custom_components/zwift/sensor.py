@@ -46,6 +46,8 @@ DEFAULT_NAME = 'Zwift'
 
 SIGNAL_ZWIFT_UPDATE = 'zwift_update_{player_id}'
 
+EVENT_ZWIFT_RIDE_ON = 'zwift_ride_on'
+
 ZWIFT_PLATFORM_INFO = {
     'XP_PER_LEVEL': [0, 1000, 2000, 3000, 4000, 5000, 7000, 10000, 13000, 16000, 19000, 23000, 28000, 33000, 38000, 44000, 50000, 56000, 62000, 70000, 78000, 88000, 94000, 100000, 110000, 121000, 130000, 140000, 150000, 170000, 180000, 190000, 200000, 220000, 230000, 250000, 260000, 280000, 290000, 310000, 330000, 340000, 360000, 380000, 400000, 420000, 440000, 460000, 480000, 500000]
 }
@@ -240,7 +242,7 @@ class ZwiftPlayerData:
         
     @property
     def level(self):
-        return self.player_profile.get('playerLevel',0)
+        return self.player_profile.get('playerLevel',None)
     
 class ZwiftData:
     """Representation of a Zwift client data collection object."""
@@ -292,24 +294,35 @@ class ZwiftData:
             throttle_interval = self.update_interval
             for player_id in self.players:
                 data = {}
-                online_player = next((player for player in online_players if str(player['playerId']) == str(player_id)),None)
-                if online_player:
-                    try:
+                online_player = next((player for player in online_players if str(player['playerId']) == str(player_id)),{})
+                try:
+                        
+                    _profile = self._client.get_profile(player_id)
+                    player_profile = _profile.profile or {}
+                    total_experience = int(player_profile.get('totalExperiencePoints'))
+                    player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
+                    player_profile['latest_activity'] = _profile.latest_activity
+                    data['total_experience'] = total_experience
+                    data['level'] = player_profile['playerLevel']
+                    
+                    if len(online_player) > 0:
                         throttle_interval = self.online_update_interval
                         player_state = world.player_status(player_id)
-                        player_profile = self._client.get_profile(player_id).profile or {}
-                        total_experience = int(player_profile.get('totalExperiencePoints'))
                         altitude = (float(player_state.altitude) - 9000) / 2 # [TODO] is this correct regardless of metric/imperial? Correct regardless of world?
                         distance = float(player_state.distance)
                         gradient = self.players[player_id].data.get('gradient')
+                        rideons = player_profile['latest_activity'].get('activityRideOnCount',0)
+                        if rideons > 0 and rideons > self.players[player_id].data.get('rideons',0):
+                            self.hass.bus.fire(EVENT_ZWIFT_RIDE_ON, {
+                                'player_id': player_id,
+                                'rideons': rideons
+                            })
                         if self.players[player_id].data.get('distance',0) > 0:
                             delta_distance = distance - self.players[player_id].data.get('distance',0)
                             delta_altitude = altitude - self.players[player_id].data.get('altitude',0)
                             if delta_distance > 0:
                                 gradient = delta_altitude / delta_distance
-                        player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
-                        online_player.update(player_profile)
-                        data = {
+                        data.update({
                             'online': True,
                             'heartrate': int(float(player_state.heartrate)),
                             'cadence': int(float(player_state.cadence)),
@@ -318,12 +331,12 @@ class ZwiftData:
                             'altitude': altitude,
                             'distance': distance,
                             'gradient': gradient,
-                            'total_experience': total_experience,
-                            'level': player_profile['playerLevel']
-                        }
-                        self.players[player_id].player_profile = online_player
-                    except:
-                        _LOGGER.exception('something went major wrong while updating zwift sensor for player {}'.format(player_id))
+                            'rideons': rideons
+                        })
+                    online_player.update(player_profile)
+                    self.players[player_id].player_profile = online_player
+                except:
+                    _LOGGER.exception('something went major wrong while updating zwift sensor for player {}'.format(player_id))
                 self.players[player_id].data = data
                 _LOGGER.debug("dispatching zwift data update for player {}".format(player_id))
                 dispatcher_send(self.hass, SIGNAL_ZWIFT_UPDATE.format(player_id=player_id))
