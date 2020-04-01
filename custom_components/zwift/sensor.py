@@ -46,6 +46,8 @@ DEFAULT_NAME = 'Zwift'
 
 SIGNAL_ZWIFT_UPDATE = 'zwift_update_{player_id}'
 
+EVENT_ZWIFT_RIDE_ON = 'zwift_ride_on'
+
 ZWIFT_PLATFORM_INFO = {
     'XP_PER_LEVEL': [0, 1000, 2000, 3000, 4000, 5000, 7000, 10000, 13000, 16000, 19000, 23000, 28000, 33000, 38000, 44000, 50000, 56000, 62000, 70000, 78000, 88000, 94000, 100000, 110000, 121000, 130000, 140000, 150000, 170000, 180000, 190000, 200000, 220000, 230000, 250000, 260000, 280000, 290000, 310000, 330000, 340000, 360000, 380000, 400000, 420000, 440000, 460000, 480000, 500000]
 }
@@ -311,8 +313,10 @@ class ZwiftData:
                         gradient = self.players[player_id].data.get('gradient')
                         rideons = player_profile['latest_activity'].get('activityRideOnCount',0)
                         if rideons > 0 and rideons > self.players[player_id].data.get('rideons',0):
-                            #send ride on event with player id and total count
-                            pass
+                            self.hass.bus.fire(EVENT_ZWIFT_RIDE_ON, {
+                                'player_id': player_id,
+                                'rideons': rideons
+                            })
                         if self.players[player_id].data.get('distance',0) > 0:
                             delta_distance = distance - self.players[player_id].data.get('distance',0)
                             delta_altitude = altitude - self.players[player_id].data.get('altitude',0)
