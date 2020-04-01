@@ -292,26 +292,34 @@ class ZwiftData:
             throttle_interval = self.update_interval
             for player_id in self.players:
                 data = {}
-                online_player = next((player for player in online_players if str(player['playerId']) == str(player_id)),None)
-                if online_player:
-                    try:
+                online_player = next((player for player in online_players if str(player['playerId']) == str(player_id)),{})
+                try:
+                        
+                    _profile = self._client.get_profile(player_id)
+                    player_profile = _profile.profile or {}
+                    total_experience = int(player_profile.get('totalExperiencePoints'))
+                    player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
+                    player_profile['latest_activity'] = _profile.latest_activity
+                    online_player.update(player_profile)
+                    data['total_experience'] = total_experience
+                    data['level'] = player_profile['playerLevel']
+                    
+                    if len(online_player) > 0:
                         throttle_interval = self.online_update_interval
                         player_state = world.player_status(player_id)
-                        _profile = self._client.get_profile(player_id)
-                        player_profile = _profile.profile or {}
-                        total_experience = int(player_profile.get('totalExperiencePoints'))
                         altitude = (float(player_state.altitude) - 9000) / 2 # [TODO] is this correct regardless of metric/imperial? Correct regardless of world?
                         distance = float(player_state.distance)
                         gradient = self.players[player_id].data.get('gradient')
+                        rideons = player_profile['latest_activity'].get('activityRideOnCount',0)
+                        if rideons > 0 and rideons > self.players[player_id].data.get('rideons',0):
+                            #send ride on event with player id and total count
+                            pass
                         if self.players[player_id].data.get('distance',0) > 0:
                             delta_distance = distance - self.players[player_id].data.get('distance',0)
                             delta_altitude = altitude - self.players[player_id].data.get('altitude',0)
                             if delta_distance > 0:
                                 gradient = delta_altitude / delta_distance
-                        player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
-                        player_profile['latest_activity'] = _profile.latest_activity
-                        online_player.update(player_profile)
-                        data = {
+                        data.update({
                             'online': True,
                             'heartrate': int(float(player_state.heartrate)),
                             'cadence': int(float(player_state.cadence)),
@@ -320,12 +328,11 @@ class ZwiftData:
                             'altitude': altitude,
                             'distance': distance,
                             'gradient': gradient,
-                            'total_experience': total_experience,
-                            'level': player_profile['playerLevel']
-                        }
-                        self.players[player_id].player_profile = online_player
-                    except:
-                        _LOGGER.exception('something went major wrong while updating zwift sensor for player {}'.format(player_id))
+                            'rideons': rideons
+                        })
+                    self.players[player_id].player_profile = online_player
+                except:
+                    _LOGGER.exception('something went major wrong while updating zwift sensor for player {}'.format(player_id))
                 self.players[player_id].data = data
                 _LOGGER.debug("dispatching zwift data update for player {}".format(player_id))
                 dispatcher_send(self.hass, SIGNAL_ZWIFT_UPDATE.format(player_id=player_id))
