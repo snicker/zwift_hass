@@ -300,7 +300,6 @@ class ZwiftData:
                     total_experience = int(player_profile.get('totalExperiencePoints'))
                     player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
                     player_profile['latest_activity'] = _profile.latest_activity
-                    online_player.update(player_profile)
                     data['total_experience'] = total_experience
                     data['level'] = player_profile['playerLevel']
                     
@@ -330,6 +329,7 @@ class ZwiftData:
                             'gradient': gradient,
                             'rideons': rideons
                         })
+                    online_player.update(player_profile)
                     self.players[player_id].player_profile = online_player
                 except:
                     _LOGGER.exception('something went major wrong while updating zwift sensor for player {}'.format(player_id))
