@@ -297,7 +297,8 @@ class ZwiftData:
                     try:
                         throttle_interval = self.online_update_interval
                         player_state = world.player_status(player_id)
-                        player_profile = self._client.get_profile(player_id).profile or {}
+                        _profile = self._client.get_profile(player_id)
+                        player_profile = _profile.profile or {}
                         total_experience = int(player_profile.get('totalExperiencePoints'))
                         altitude = (float(player_state.altitude) - 9000) / 2 # [TODO] is this correct regardless of metric/imperial? Correct regardless of world?
                         distance = float(player_state.distance)
@@ -308,6 +309,7 @@ class ZwiftData:
                             if delta_distance > 0:
                                 gradient = delta_altitude / delta_distance
                         player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
+                        player_profile['latest_activity'] = _profile.latest_activity
                         online_player.update(player_profile)
                         data = {
                             'online': True,
