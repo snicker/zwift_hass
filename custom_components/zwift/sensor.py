@@ -74,7 +74,7 @@ SENSOR_TYPES = {
     'cadence': {'name': 'Cadence', 'unit': 'rpm', 'icon': 'mdi:rotate-right'},
     'power': {'name': 'Power', 'unit': 'W', 'icon': 'mdi:flash'},
     'altitude': {'name': 'Altitude', 'unit': 'ft', 'unit_metric': 'm', 'icon': 'mdi:altimeter'},
-    'distance': {'name': 'Distance', 'unit': 'miles', 'unit_metric': 'km', 'icon': 'mdi:arrow-expand-horizontal'},
+    'distance': {'name': 'Distance', 'unit': 'miles', 'unit_metric': 'm', 'icon': 'mdi:arrow-expand-horizontal'},
     'gradient': {'name': 'Gradient', 'unit': '%', 'icon': 'mdi:image-filter-hdr'},
     'level': {'name': 'Level', 'icon': 'mdi:stairs'}
 }
