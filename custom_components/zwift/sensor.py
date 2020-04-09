@@ -57,6 +57,15 @@ ZWIFT_IGNORED_PROFILE_ATTRIBUTES = [
     'publicAttributes'
 ]
 
+ZWIFT_WORLDS = {
+    1: "Watopia",
+    2: "Richmond",
+    3: "London",
+    4: "New York",
+    5: "Innsbruck",
+    7: "Yorkshire"
+}
+
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_USERNAME): cv.string,
     vol.Required(CONF_PASSWORD): cv.string,
@@ -301,9 +310,13 @@ class ZwiftData:
                     player_profile = _profile.profile or {}
                     total_experience = int(player_profile.get('totalExperiencePoints'))
                     player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
-                    player_profile['latest_activity'] = _profile.latest_activity
+                    latest_activity = _profile.latest_activity
+                    latest_activity['world_name'] = ZWIFT_WORLDS.get(latest_activity.get('worldId'))
+                    player_profile['latest_activity'] = latest_activity
+
                     data['total_experience'] = total_experience
                     data['level'] = player_profile['playerLevel']
+                    player_profile['world_name'] = ZWIFT_WORLDS.get(player_profile.get('worldId'))
                     
                     if len(online_player) > 0:
                         throttle_interval = self.online_update_interval
@@ -311,7 +324,7 @@ class ZwiftData:
                         altitude = (float(player_state.altitude) - 9000) / 2 # [TODO] is this correct regardless of metric/imperial? Correct regardless of world?
                         distance = float(player_state.distance)
                         gradient = self.players[player_id].data.get('gradient')
-                        rideons = player_profile['latest_activity'].get('activityRideOnCount',0)
+                        rideons = latest_activity.get('activityRideOnCount',0)
                         if rideons > 0 and rideons > self.players[player_id].data.get('rideons',0):
                             self.hass.bus.fire(EVENT_ZWIFT_RIDE_ON, {
                                 'player_id': player_id,
