@@ -31,7 +31,7 @@ This integration will emit the following events:
 
 ## `zwift_ride_on`
 
-When an online player recieves a "Ride on!" from another player, this event will be omitted with the following data:
+When an online player recieves a "Ride on!" from another player, this event will be emitted with the following data:
 
 ```
 player_id: <the tracked player id recieving the ride on>
