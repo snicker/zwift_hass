@@ -87,6 +87,8 @@ SENSOR_TYPES = {
     'gradient': {'name': 'Gradient', 'unit': '%', 'icon': 'mdi:image-filter-hdr'},
     'level': {'name': 'Level', 'icon': 'mdi:stairs'},
     'runlevel': {'name': 'Run Level', 'icon': 'mdi:run-fast'},
+    'cycleprogress': {'name': 'Cycle Progress', 'icon': 'mdi:transfer-right'},
+    'runprogress': {'name': 'Run Progress', 'icon': 'mdi:transfer-right'},
 }
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
@@ -258,6 +260,14 @@ class ZwiftPlayerData:
     def runlevel(self):
         return self.player_profile.get('runLevel',None)
 
+    @property
+    def cycleprogress(self):
+        return self.player_profile.get('cycleProgress',None)
+
+    @property
+    def runprogress(self):
+        return self.player_profile.get('runProgress',None)
+
 class ZwiftData:
     """Representation of a Zwift client data collection object."""
     def __init__(self, update_interval, username, password, players, hass):
@@ -316,6 +326,8 @@ class ZwiftData:
                     total_experience = int(player_profile.get('totalExperiencePoints'))
                     player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
                     player_profile['runLevel'] = int(player_profile.get('runAchievementLevel') / 100)
+                    player_profile['cycleProgress'] = int(player_profile.get('achievementLevel') % 100)
+                    player_profile['runProgress'] = int(player_profile.get('runAchievementLevel') % 100)
                     latest_activity = _profile.latest_activity
                     latest_activity['world_name'] = ZWIFT_WORLDS.get(latest_activity.get('worldId'))
                     player_profile['latest_activity'] = latest_activity
