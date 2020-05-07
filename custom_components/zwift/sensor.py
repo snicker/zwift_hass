@@ -9,7 +9,7 @@ sensor:
     username: !secret my_zwift_username
     password: !secret my_zwift_password
     players:
-      - !secret my_zwift_player_id 
+      - !secret my_zwift_player_id
       - !secret my_friends_zwift_player_id
 ```
 
@@ -35,7 +35,7 @@ from homeassistant.util import Throttle
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, \
     async_dispatcher_connect
-    
+
 CONF_UPDATE_INTERVAL = 'update_interval'
 CONF_PLAYERS = 'players'
 CONF_INCLUDE_SELF = 'include_self'
@@ -47,10 +47,6 @@ DEFAULT_NAME = 'Zwift'
 SIGNAL_ZWIFT_UPDATE = 'zwift_update_{player_id}'
 
 EVENT_ZWIFT_RIDE_ON = 'zwift_ride_on'
-
-ZWIFT_PLATFORM_INFO = {
-    'XP_PER_LEVEL': [0, 1000, 2000, 3000, 4000, 5000, 7000, 10000, 13000, 16000, 19000, 23000, 28000, 33000, 38000, 44000, 50000, 56000, 62000, 70000, 78000, 88000, 94000, 100000, 110000, 121000, 130000, 140000, 150000, 170000, 180000, 190000, 200000, 220000, 230000, 250000, 260000, 280000, 290000, 310000, 330000, 340000, 360000, 380000, 400000, 420000, 440000, 460000, 480000, 500000]
-}
 
 ZWIFT_IGNORED_PROFILE_ATTRIBUTES = [
     'privateAttributes',
@@ -85,7 +81,10 @@ SENSOR_TYPES = {
     'altitude': {'name': 'Altitude', 'unit': 'ft', 'unit_metric': 'm', 'icon': 'mdi:altimeter'},
     'distance': {'name': 'Distance', 'unit': 'miles', 'unit_metric': 'm', 'icon': 'mdi:arrow-expand-horizontal'},
     'gradient': {'name': 'Gradient', 'unit': '%', 'icon': 'mdi:image-filter-hdr'},
-    'level': {'name': 'Level', 'icon': 'mdi:stairs'}
+    'level': {'name': 'Level', 'icon': 'mdi:stairs'},
+    'runlevel': {'name': 'Run Level', 'icon': 'mdi:run-fast'},
+    'cycleprogress': {'name': 'Cycle Progress', 'unit': '%', 'icon': 'mdi:transfer-right'},
+    'runprogress': {'name': 'Run Progress', 'unit': '%', 'icon': 'mdi:transfer-right'},
 }
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
@@ -97,15 +96,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     name = config.get(CONF_NAME)
     update_interval = config.get(CONF_UPDATE_INTERVAL)
     include_self = config.get(CONF_INCLUDE_SELF)
-    
-    
+
+
     zwift_data = ZwiftData(update_interval, username, password, players, hass)
     try:
-        zwift_data._connect()
+        await zwift_data._connect()
     except:
         _LOGGER.exception("Could not create Zwift sensor named '{}'!".format(name))
         return
-        
+
     def update_thread(zwift_data, hass):
         _LOGGER.debug("ZwiftSensor update thread started")
         while hass.is_running:
@@ -115,7 +114,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 _LOGGER.exception('exception in zwift sensor data update thread')
             time.sleep(1)
         _LOGGER.debug("ZwiftSensor update thread ended")
-        
+
     @callback
     def start_up(event):
         """Start Zwift update thread."""
@@ -126,10 +125,10 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         ).start()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, start_up)
-        
+
     if include_self:
         zwift_data.add_tracked_player(zwift_data._profile.get('id'))
-        
+
     dev = []
     for player_id in zwift_data.players:
         for variable in SENSOR_TYPES:
@@ -139,7 +138,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 dev.append(ZwiftSensorDevice(name, zwift_data, zwift_data.players[player_id], variable))
 
     async_add_entities(dev, True)
-    
+
 
 class ZwiftSensorDevice(Entity):
     def __init__(self, name, zwift_data, player, sensor_type):
@@ -172,7 +171,7 @@ class ZwiftSensorDevice(Entity):
         if self._zwift_data.is_metric:
             return SENSOR_TYPES[self._type].get('unit_metric') or SENSOR_TYPES[self._type].get('unit')
         return SENSOR_TYPES[self._type].get('unit')
-        
+
     @property
     def icon(self):
         return SENSOR_TYPES[self._type].get('icon')
@@ -183,7 +182,7 @@ class ZwiftSensorDevice(Entity):
         if self._type == 'online':
             p = self._player.player_profile
             self._attrs.update({k: p[k] for k in p if k not in ZWIFT_IGNORED_PROFILE_ATTRIBUTES})
-        
+
     async def async_added_to_hass(self):
         """Register update signal handler."""
         async def async_update_state():
@@ -191,7 +190,7 @@ class ZwiftSensorDevice(Entity):
             await self.async_update_ha_state(True)
 
         async_dispatcher_connect(self.hass, SIGNAL_ZWIFT_UPDATE.format(player_id=self._player.player_id), async_update_state)
-        
+
 class ZwiftBinarySensorDevice(ZwiftSensorDevice, BinarySensorDevice):
     @property
     def is_on(self):
@@ -202,57 +201,69 @@ class ZwiftBinarySensorDevice(ZwiftSensorDevice, BinarySensorDevice):
     def device_class(self):
         """Return the device class of the binary sensor."""
         return SENSOR_TYPES[self._type].get('device_class')
-  
+
 class ZwiftPlayerData:
     def __init__(self, player_id):
         self._player_id = player_id
         self.data = {}
         self.player_profile = {}
-        
+
     @property
     def player_id(self):
         return self._player_id
-        
+
     @property
     def friendly_player_id(self):
         return self.player_profile.get('firstName') or self.player_id
-        
+
     @property
     def online(self):
         return self.data.get('online',False)
-        
+
     @property
     def hr(self):
         return self.data.get('heartrate',0.0)
-        
+
     @property
     def speed(self):
         return self.data.get('speed',0.0)
-        
+
     @property
     def cadence(self):
         return self.data.get('cadence',0.0)
-        
+
     @property
     def power(self):
         return self.data.get('power',0.0)
-        
+
     @property
     def altitude(self):
         return self.data.get('altitude',0.0)
-        
+
     @property
     def distance(self):
         return self.data.get('distance',0.0)
-        
+
     @property
     def gradient(self):
         return self.data.get('gradient',0.0)
-        
+
     @property
     def level(self):
         return self.player_profile.get('playerLevel',None)
-    
+
+    @property
+    def runlevel(self):
+        return self.player_profile.get('runLevel',None)
+
+    @property
+    def cycleprogress(self):
+        return self.player_profile.get('cycleProgress',None)
+
+    @property
+    def runprogress(self):
+        return self.player_profile.get('runProgress',None)
+
 class ZwiftData:
     """Representation of a Zwift client data collection object."""
     def __init__(self, update_interval, username, password, players, hass):
@@ -269,34 +280,35 @@ class ZwiftData:
         if players:
             for player_id in players:
                 self.add_tracked_player(player_id)
-        
+
     def add_tracked_player(self, player_id):
         if player_id:
             self.players[player_id] = ZwiftPlayerData(player_id)
 
-    def check_zwift_auth(self, client):
-        token = client.auth_token.fetch_token_data()
+    async def check_zwift_auth(self, client):
+        token = await self.hass.async_add_executor_job(client.auth_token.fetch_token_data)
         if 'error' in token:
             raise Exception("Zwift authorization failed: {}".format(token))
         return True
-    
+
     @property
     def is_metric(self):
         if self._profile:
             return self._profile.get('useMetric',False)
         return False
-        
-    def _connect(self):
+
+    async def _connect(self):
         from zwift import Client as ZwiftClient
         client = ZwiftClient(self.username,self.password)
-        if self.check_zwift_auth(client):
+        if await self.check_zwift_auth(client):
             self._client = client
-            self._profile = self._client.get_profile().profile
+            self._profile = await self.hass.async_add_executor_job(self._get_self_profile)
             return self._client
 
+    def _get_self_profile(self):
+        return self._client.get_profile().profile
+
     def _update(self):
-        if self._client is None:
-            self._connect()
         if self._client:
             world = self._client.get_world(1)
             online_players = world.players['friendsInWorld']
@@ -305,11 +317,14 @@ class ZwiftData:
                 data = {}
                 online_player = next((player for player in online_players if str(player['playerId']) == str(player_id)),{})
                 try:
-                        
+
                     _profile = self._client.get_profile(player_id)
                     player_profile = _profile.profile or {}
                     total_experience = int(player_profile.get('totalExperiencePoints'))
-                    player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
+                    player_profile['playerLevel'] = int(player_profile.get('achievementLevel',0) / 100) 
+                    player_profile['runLevel'] = int(player_profile.get('runAchievementLevel',0) / 100)
+                    player_profile['cycleProgress'] = int(player_profile.get('achievementLevel',0) % 100)
+                    player_profile['runProgress'] = int(player_profile.get('runAchievementLevel',0) % 100)
                     latest_activity = _profile.latest_activity
                     latest_activity['world_name'] = ZWIFT_WORLDS.get(latest_activity.get('worldId'))
                     player_profile['latest_activity'] = latest_activity
@@ -317,7 +332,7 @@ class ZwiftData:
                     data['total_experience'] = total_experience
                     data['level'] = player_profile['playerLevel']
                     player_profile['world_name'] = ZWIFT_WORLDS.get(player_profile.get('worldId'))
-                    
+
                     if len(online_player) > 0:
                         throttle_interval = self.online_update_interval
                         player_state = world.player_status(player_id)
@@ -354,5 +369,4 @@ class ZwiftData:
                 _LOGGER.debug("dispatching zwift data update for player {}".format(player_id))
                 dispatcher_send(self.hass, SIGNAL_ZWIFT_UPDATE.format(player_id=player_id))
             self.throttle.min_time = throttle_interval
-            
-            
+
