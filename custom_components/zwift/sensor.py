@@ -100,7 +100,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     zwift_data = ZwiftData(update_interval, username, password, players, hass)
     try:
-        zwift_data._connect()
+        await zwift_data._connect()
     except:
         _LOGGER.exception("Could not create Zwift sensor named '{}'!".format(name))
         return
@@ -285,8 +285,8 @@ class ZwiftData:
         if player_id:
             self.players[player_id] = ZwiftPlayerData(player_id)
 
-    def check_zwift_auth(self, client):
-        token = client.auth_token.fetch_token_data()
+    async def check_zwift_auth(self, client):
+        token = await self.hass.async_add_executor_job(client.auth_token.fetch_token_data)
         if 'error' in token:
             raise Exception("Zwift authorization failed: {}".format(token))
         return True
@@ -297,17 +297,18 @@ class ZwiftData:
             return self._profile.get('useMetric',False)
         return False
 
-    def _connect(self):
+    async def _connect(self):
         from zwift import Client as ZwiftClient
         client = ZwiftClient(self.username,self.password)
-        if self.check_zwift_auth(client):
+        if await self.check_zwift_auth(client):
             self._client = client
-            self._profile = self._client.get_profile().profile
+            self._profile = await self.hass.async_add_executor_job(self._get_self_profile)
             return self._client
 
+    def _get_self_profile(self):
+        return self._client.get_profile(player_id).profile
+
     def _update(self):
-        if self._client is None:
-            self._connect()
         if self._client:
             world = self._client.get_world(1)
             online_players = world.players['friendsInWorld']
