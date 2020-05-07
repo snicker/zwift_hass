@@ -306,7 +306,7 @@ class ZwiftData:
             return self._client
 
     def _get_self_profile(self):
-        return self._client.get_profile(player_id).profile
+        return self._client.get_profile().profile
 
     def _update(self):
         if self._client:
