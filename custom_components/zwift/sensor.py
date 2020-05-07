@@ -48,10 +48,6 @@ SIGNAL_ZWIFT_UPDATE = 'zwift_update_{player_id}'
 
 EVENT_ZWIFT_RIDE_ON = 'zwift_ride_on'
 
-ZWIFT_PLATFORM_INFO = {
-    'XP_PER_LEVEL': [0, 1000, 2000, 3000, 4000, 5000, 7000, 10000, 13000, 16000, 19000, 23000, 28000, 33000, 38000, 44000, 50000, 56000, 62000, 70000, 78000, 88000, 94000, 100000, 110000, 121000, 130000, 140000, 150000, 170000, 180000, 190000, 200000, 220000, 230000, 250000, 260000, 280000, 290000, 310000, 330000, 340000, 360000, 380000, 400000, 420000, 440000, 460000, 480000, 500000]
-}
-
 ZWIFT_IGNORED_PROFILE_ATTRIBUTES = [
     'privateAttributes',
     'publicAttributes'
@@ -87,8 +83,8 @@ SENSOR_TYPES = {
     'gradient': {'name': 'Gradient', 'unit': '%', 'icon': 'mdi:image-filter-hdr'},
     'level': {'name': 'Level', 'icon': 'mdi:stairs'},
     'runlevel': {'name': 'Run Level', 'icon': 'mdi:run-fast'},
-    'cycleprogress': {'name': 'Cycle Progress', 'icon': 'mdi:transfer-right'},
-    'runprogress': {'name': 'Run Progress', 'icon': 'mdi:transfer-right'},
+    'cycleprogress': {'name': 'Cycle Progress', 'unit': '%', 'icon': 'mdi:transfer-right'},
+    'runprogress': {'name': 'Run Progress', 'unit': '%', 'icon': 'mdi:transfer-right'},
 }
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
@@ -324,10 +320,10 @@ class ZwiftData:
                     _profile = self._client.get_profile(player_id)
                     player_profile = _profile.profile or {}
                     total_experience = int(player_profile.get('totalExperiencePoints'))
-                    player_profile['playerLevel'] = sum(total_experience >= total_experience_per_level for total_experience_per_level in ZWIFT_PLATFORM_INFO['XP_PER_LEVEL'])
-                    player_profile['runLevel'] = int(player_profile.get('runAchievementLevel') / 100)
-                    player_profile['cycleProgress'] = int(player_profile.get('achievementLevel') % 100)
-                    player_profile['runProgress'] = int(player_profile.get('runAchievementLevel') % 100)
+                    player_profile['playerLevel'] = int(player_profile.get('achievementLevel',0) / 100) 
+                    player_profile['runLevel'] = int(player_profile.get('runAchievementLevel',0) / 100)
+                    player_profile['cycleProgress'] = int(player_profile.get('achievementLevel',0) % 100)
+                    player_profile['runProgress'] = int(player_profile.get('runAchievementLevel',0) % 100)
                     latest_activity = _profile.latest_activity
                     latest_activity['world_name'] = ZWIFT_WORLDS.get(latest_activity.get('worldId'))
                     player_profile['latest_activity'] = latest_activity
