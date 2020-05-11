@@ -311,11 +311,10 @@ class ZwiftData:
     def _update(self):
         if self._client:
             world = self._client.get_world(1)
-            online_players = world.players['friendsInWorld']
             throttle_interval = self.update_interval
             for player_id in self.players:
                 data = {}
-                online_player = next((player for player in online_players if str(player['playerId']) == str(player_id)),{})
+                online_player = {}
                 try:
 
                     _profile = self._client.get_profile(player_id)
@@ -333,7 +332,7 @@ class ZwiftData:
                     data['level'] = player_profile['playerLevel']
                     player_profile['world_name'] = ZWIFT_WORLDS.get(player_profile.get('worldId'))
 
-                    if len(online_player) > 0:
+                    if player_profile.get('riding'):
                         throttle_interval = self.online_update_interval
                         player_state = world.player_status(player_id)
                         altitude = (float(player_state.altitude) - 9000) / 2 # [TODO] is this correct regardless of metric/imperial? Correct regardless of world?
