@@ -31,10 +31,10 @@ from homeassistant.const import CONF_NAME, CONF_USERNAME, CONF_PASSWORD, EVENT_H
 from homeassistant.helpers.aiohttp_client import SERVER_SOFTWARE
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
-from homeassistant.util import Throttle
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import dispatcher_send, \
     async_dispatcher_connect
+from homeassistant.helpers.event import async_call_later
 
 CONF_UPDATE_INTERVAL = 'update_interval'
 CONF_PLAYERS = 'players'
@@ -105,29 +105,25 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         _LOGGER.exception("Could not create Zwift sensor named '{}'!".format(name))
         return
 
-    def update_thread(zwift_data, hass):
-        _LOGGER.debug("ZwiftSensor update thread started")
-        while hass.is_running:
-            try:
-                zwift_data.update()
-            except:
-                _LOGGER.exception('exception in zwift sensor data update thread')
-            time.sleep(1)
-        _LOGGER.debug("ZwiftSensor update thread ended")
-
-    @callback
-    def start_up(event):
-        """Start Zwift update thread."""
-        threading.Thread(
-            name='ZwiftSensor (name:{}) update thread'.format(name),
-            target=update_thread,
-            args=(zwift_data, hass)
-        ).start()
-
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, start_up)
-
     if include_self:
         zwift_data.add_tracked_player(zwift_data._profile.get('id'))
+
+    async def update_data(now):
+        if zwift_data._client is None:
+            await zwift_data._connect()
+        await hass.async_add_executor_job(zwift_data.update)
+
+        next_update = zwift_data.update_interval
+        if zwift_data.any_players_online:
+            next_update = zwift_data.online_update_interval
+        
+        async_call_later(
+            hass,
+            next_update.total_seconds(),
+            update_data
+        )
+
+    await update_data(None)
 
     dev = []
     for player_id in zwift_data.players:
@@ -153,6 +149,11 @@ class ZwiftSensorDevice(Entity):
     @property
     def name(self):
         """Return the name of the sensor."""
+        return "{} {} ({})".format(self._base_name,SENSOR_TYPES[self._type].get('name'),self._player.player_id)
+
+    @property
+    def friendly_name(self):
+        """Return the friendly name of the sensor."""
         return "{} {} ({})".format(self._base_name,SENSOR_TYPES[self._type].get('name'),self._player.friendly_player_id)
 
     @property
@@ -275,8 +276,6 @@ class ZwiftData:
         self._profile = None
         self.update_interval = update_interval
         self.online_update_interval = timedelta(seconds=1)
-        self.throttle = Throttle(self.update_interval)
-        self.update = self.throttle(self._update)
         if players:
             for player_id in players:
                 self.add_tracked_player(player_id)
@@ -284,6 +283,10 @@ class ZwiftData:
     def add_tracked_player(self, player_id):
         if player_id:
             self.players[player_id] = ZwiftPlayerData(player_id)
+
+    @property
+    def any_players_online(self):
+        return sum([p.online for p in self.players.values()]) > 0
 
     async def check_zwift_auth(self, client):
         token = await self.hass.async_add_executor_job(client.auth_token.fetch_token_data)
@@ -308,10 +311,9 @@ class ZwiftData:
     def _get_self_profile(self):
         return self._client.get_profile().profile
 
-    def _update(self):
+    def update(self):
         if self._client:
             world = self._client.get_world(1)
-            throttle_interval = self.update_interval
             for player_id in self.players:
                 data = {}
                 online_player = {}
@@ -333,7 +335,6 @@ class ZwiftData:
                     player_profile['world_name'] = ZWIFT_WORLDS.get(player_profile.get('worldId'))
 
                     if player_profile.get('riding'):
-                        throttle_interval = self.online_update_interval
                         player_state = world.player_status(player_id)
                         altitude = (float(player_state.altitude) - 9000) / 2 # [TODO] is this correct regardless of metric/imperial? Correct regardless of world?
                         distance = float(player_state.distance)
@@ -362,10 +363,13 @@ class ZwiftData:
                         })
                     online_player.update(player_profile)
                     self.players[player_id].player_profile = online_player
-                except:
-                    _LOGGER.exception('something went major wrong while updating zwift sensor for player {}'.format(player_id))
+                except Exception as e:
+                    if '401' in str(e):
+                        self._client = None
+                        _LOGGER.warning('Zwift credentials are wrong or expired')
+                    else:
+                        _LOGGER.exception('something went major wrong while updating zwift sensor for player {}'.format(player_id))
                 self.players[player_id].data = data
                 _LOGGER.debug("dispatching zwift data update for player {}".format(player_id))
                 dispatcher_send(self.hass, SIGNAL_ZWIFT_UPDATE.format(player_id=player_id))
-            self.throttle.min_time = throttle_interval
 
