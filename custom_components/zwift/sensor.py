@@ -26,7 +26,10 @@ REQUIREMENTS = ['zwift-client==0.2.0']
 import voluptuous as vol
 from datetime import timedelta
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.components.binary_sensor import BinarySensorEntity
+try:
+    from homeassistant.components.binary_sensor import BinarySensorEntity
+except ImportError:
+    from homeassistant.components.binary_sensor import BinarySensorDevice as BinarySensorEntity
 from homeassistant.const import CONF_NAME, CONF_USERNAME, CONF_PASSWORD, EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP
 from homeassistant.helpers.aiohttp_client import SERVER_SOFTWARE
 import homeassistant.helpers.config_validation as cv
