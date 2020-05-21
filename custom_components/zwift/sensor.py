@@ -26,7 +26,10 @@ REQUIREMENTS = ['zwift-client==0.2.0']
 import voluptuous as vol
 from datetime import timedelta
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.components.binary_sensor import BinarySensorDevice
+try:
+    from homeassistant.components.binary_sensor import BinarySensorEntity
+except ImportError:
+    from homeassistant.components.binary_sensor import BinarySensorDevice as BinarySensorEntity
 from homeassistant.const import CONF_NAME, CONF_USERNAME, CONF_PASSWORD, EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP
 from homeassistant.helpers.aiohttp_client import SERVER_SOFTWARE
 import homeassistant.helpers.config_validation as cv
@@ -116,7 +119,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         next_update = zwift_data.update_interval
         if zwift_data.any_players_online:
             next_update = zwift_data.online_update_interval
-        
+
         async_call_later(
             hass,
             next_update.total_seconds(),
@@ -192,7 +195,7 @@ class ZwiftSensorDevice(Entity):
 
         async_dispatcher_connect(self.hass, SIGNAL_ZWIFT_UPDATE.format(player_id=self._player.player_id), async_update_state)
 
-class ZwiftBinarySensorDevice(ZwiftSensorDevice, BinarySensorDevice):
+class ZwiftBinarySensorDevice(ZwiftSensorDevice, BinarySensorEntity):
     @property
     def is_on(self):
         """Return true if the binary sensor is on."""
