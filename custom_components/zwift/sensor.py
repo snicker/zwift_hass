@@ -62,7 +62,9 @@ ZWIFT_WORLDS = {
     3: "London",
     4: "New York",
     5: "Innsbruck",
-    7: "Yorkshire"
+    7: "Yorkshire",
+    8: "France",
+    9: "Paris"
 }
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
