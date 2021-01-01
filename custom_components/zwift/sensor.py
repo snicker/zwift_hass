@@ -242,7 +242,7 @@ class ZwiftPlayerData:
 
     @property
     def altitude(self):
-        return self.data.get('altitude',0.0)
+        return round(self.data.get('altitude', 0.0), 1)
 
     @property
     def distance(self):
