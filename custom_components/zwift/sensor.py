@@ -53,7 +53,20 @@ EVENT_ZWIFT_RIDE_ON = 'zwift_ride_on'
 
 ZWIFT_IGNORED_PROFILE_ATTRIBUTES = [
     'privateAttributes',
-    'publicAttributes'
+    'publicAttributes',
+    'connectedToStrava',
+    'connectedToTrainingPeaks',
+    'connectedToTodaysPlan',
+    'connectedToUnderArmour',
+    'connectedToWithings',
+    'connectedToFitbit',
+    'connectedToGarmin',
+    'connectedToRuntastic',
+    'mixpanelDistinctId',
+    'bigCommerceId',
+    'avantlinkId',
+    'userAgent',
+    'launchedGameClient'
 ]
 
 ZWIFT_WORLDS = {
