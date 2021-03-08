@@ -226,31 +226,31 @@ class ZwiftPlayerData:
 
     @property
     def hr(self):
-        return self.data.get('heartrate',0.0)
+        return round(self.data.get('heartrate', 0.0), 0)
 
     @property
     def speed(self):
-        return self.data.get('speed',0.0)
+        return round(self.data.get('speed', 0.0), 0)
 
     @property
     def cadence(self):
-        return self.data.get('cadence',0.0)
+        return round(self.data.get('cadence', 0.0), 0)
 
     @property
     def power(self):
-        return self.data.get('power',0.0)
+        return round(self.data.get('power', 0.0), 0)
 
     @property
     def altitude(self):
-        return self.data.get('altitude',0.0)
+        return round(self.data.get('altitude', 0.0), 1)
 
     @property
     def distance(self):
-        return self.data.get('distance',0.0)
+        return self.data.get('distance', 0.0)
 
     @property
     def gradient(self):
-        return self.data.get('gradient',0.0)
+        return round(self.data.get('gradient', 0.0), 1)
 
     @property
     def level(self):
