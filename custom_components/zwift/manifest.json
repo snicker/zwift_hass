@@ -4,5 +4,6 @@
   "documentation": "https://github.com/snicker/zwift_hass/blob/master/README.md",
   "requirements": ["zwift-client==0.2.0"],
   "dependencies": [],
+  "version": "3.2.1",
   "codeowners": ["@snicker"]
 }
