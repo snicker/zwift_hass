@@ -342,6 +342,7 @@ class ZwiftData:
 
                     _profile = self._client.get_profile(player_id)
                     player_profile = _profile.profile or {}
+                    _LOGGER.debug("Zwift profile data: {}".format(player_profile))
                     total_experience = int(player_profile.get('totalExperiencePoints'))
                     player_profile['playerLevel'] = int(player_profile.get('achievementLevel',0) / 100) 
                     player_profile['runLevel'] = int(player_profile.get('runAchievementLevel',0) / 100)
@@ -357,9 +358,10 @@ class ZwiftData:
 
                     if player_profile.get('riding'):
                         player_state = world.player_status(player_id)
+                        _LOGGER.debug("Zwift player state data: {}".format(player_state.player_state))
                         altitude = (float(player_state.altitude) - 9000) / 2 # [TODO] is this correct regardless of metric/imperial? Correct regardless of world?
                         distance = float(player_state.distance)
-                        gradient = self.players[player_id].data.get('gradient')
+                        gradient = self.players[player_id].data.get('gradient', 0)
                         rideons = latest_activity.get('activityRideOnCount',0)
                         if rideons > 0 and rideons > self.players[player_id].data.get('rideons',0):
                             self.hass.bus.fire(EVENT_ZWIFT_RIDE_ON, {
