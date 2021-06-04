@@ -78,6 +78,7 @@ ZWIFT_WORLDS = {
     6: "Bologna",
     7: "Yorkshire",
     8: "Crit City",
+    9: "Makuri Islands",
     10: "France",
     11: "Paris"
 }
