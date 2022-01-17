@@ -188,7 +188,7 @@ class ZwiftSensorDevice(Entity):
         return "{} {} ({})".format(self._base_name, SENSOR_TYPES[self._type].get('name'), self._player.friendly_player_id)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes."""
         return self._attrs
 
