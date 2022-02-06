@@ -398,7 +398,7 @@ class ZwiftData:
                         current_interval = self.online_update_interval
                         new_interval = self.online_update_interval + timedelta(seconds=0.25)
                         self.online_update_interval = new_interval
-                        _LOGGER.warning('Upstream request throttling 429 - known issue, increasing interval from {}s to {}s')
+                        _LOGGER.warning('Upstream request throttling 429 - known issue, increasing interval from {}s to {}s'.format(current_interval.total_seconds(),new_interval.total_seconds()))
                     else:
                         _LOGGER.exception('something went wrong in Zwift python library - {} while updating zwift sensor for player {}'.format(str(e), player_id))
                 except Exception as e:
