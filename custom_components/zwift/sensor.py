@@ -387,17 +387,22 @@ class ZwiftData:
                         })
                     online_player.update(player_profile)
                     self.players[player_id].player_profile = online_player
+                    self.players[player_id].data = data
                 except RequestException as e:
                     if '401' in str(e):
                         self._client = None
                         _LOGGER.warning('Zwift credentials are wrong or expired')
                     elif '404' in str(e):
                         _LOGGER.warning('Upstream Zwift 404 - will try later')
+                    elif '429' in str(e):
+                        current_interval = self.online_update_interval
+                        new_interval = self.online_update_interval + timedelta(seconds=0.25)
+                        self.online_update_interval = new_interval
+                        _LOGGER.warning('Upstream request throttling 429 - known issue, increasing interval from {}s to {}s')
                     else:
                         _LOGGER.exception('something went wrong in Zwift python library - {} while updating zwift sensor for player {}'.format(str(e), player_id))
                 except Exception as e:
                     _LOGGER.exception('something went major wrong while updating zwift sensor for player {}'.format(player_id))
-                self.players[player_id].data = data
                 _LOGGER.debug("dispatching zwift data update for player {}".format(player_id))
                 dispatcher_send(self.hass, SIGNAL_ZWIFT_UPDATE.format(player_id=player_id))
 
