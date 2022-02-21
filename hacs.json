@@ -1,4 +1,5 @@
 {
-	"name": "Zwift Sensors",
-	"domains": ["sensor"]
+  "name": "Zwift Sensors",
+  "domains": ["sensor"],
+  "homeassistant": "2021.12"
 }
