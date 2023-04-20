@@ -338,6 +338,8 @@ class ZwiftData:
         return False
 
     async def _connect(self):
+        import os
+        os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
         from zwift import Client as ZwiftClient
         client = ZwiftClient(self.username, self.password)
         if await self.check_zwift_auth(client):
