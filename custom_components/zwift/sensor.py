@@ -341,7 +341,7 @@ class ZwiftData:
         # we need to patch the zwift protobuf as the upstream
         # library has not yet been updated (9/16/2023)
         import sys
-        from zwift_patch import zwift_messages_pb2 as new_pb2
+        from .zwift_patch import zwift_messages_pb2 as new_pb2
         sys.modules['zwift.zwift_messages_pb2'] = new_pb2
         # evil patch ends here
 
