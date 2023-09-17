@@ -338,8 +338,13 @@ class ZwiftData:
         return False
 
     async def _connect(self):
-        import os
-        os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
+        # we need to patch the zwift protobuf as the upstream
+        # library has not yet been updated (9/16/2023)
+        import sys
+        from zwift_patch import zwift_messages_pb2 as new_pb2
+        sys.modules['zwift.zwift_messages_pb2'] = new_pb2
+        # evil patch ends here
+
         from zwift import Client as ZwiftClient
         client = ZwiftClient(self.username, self.password)
         if await self.check_zwift_auth(client):
