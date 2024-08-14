@@ -11,7 +11,7 @@ Installation
 ===
 
 1. Install this from HACs
-2. Add a configuration similar to the one below to your HA configuration. Players should be a list of "player_id" numbers that you wish to track. Your own `player_id` will be automatically included unless you specify the `include_self` directive in your sensor config and set it to `false`
+2. Add a configuration similar to the one below to your HA configuration.
 
 ```
 sensor:
@@ -23,6 +23,12 @@ sensor:
 ```
 
 3. Restart HomeAssistant
+
+### Configuration Tips and Tricks
+
+* Use your Zwift email address for `my_zwift_username` above.
+* `players:` should be a list of "player_id" numbers that you wish to track. 
+  * Your own `player_id` will be automatically included unless you specify the `include_self` directive in your sensor config and set it to `false`
 
 Events
 ===
