@@ -15,20 +15,34 @@ sensor:
 
 """
 
-from homeassistant.helpers.event import async_call_later
-from homeassistant.helpers.dispatcher import dispatcher_send, \
-    async_dispatcher_connect
-from homeassistant.core import callback
-from homeassistant.helpers.entity import Entity
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.aiohttp_client import SERVER_SOFTWARE
-from homeassistant.const import CONF_NAME, CONF_USERNAME, CONF_PASSWORD, EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP
-from homeassistant.components.sensor import PLATFORM_SCHEMA
-from datetime import timedelta
-import voluptuous as vol
 import logging
+import sys
 import threading
 import time
+from datetime import timedelta
+
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
+from homeassistant.components.sensor import PLATFORM_SCHEMA
+from homeassistant.const import (CONF_NAME, CONF_PASSWORD, CONF_USERNAME,
+                                 EVENT_HOMEASSISTANT_START,
+                                 EVENT_HOMEASSISTANT_STOP)
+from homeassistant.core import callback
+from homeassistant.helpers.aiohttp_client import SERVER_SOFTWARE
+from homeassistant.helpers.dispatcher import (async_dispatcher_connect,
+                                              dispatcher_send)
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.event import async_call_later
+
+# we need to patch the zwift protobuf as the upstream
+# library has not yet been updated (9/16/2023)
+from .zwift_patch import zwift_messages_pb2 as new_pb2
+
+sys.modules['zwift.zwift_messages_pb2'] = new_pb2
+# evil patch ends here
+
+from zwift import Client as ZwiftClient
+from zwift.error import RequestException
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,7 +51,8 @@ REQUIREMENTS = ['zwift-client==0.2.0']
 try:
     from homeassistant.components.binary_sensor import BinarySensorEntity
 except ImportError:
-    from homeassistant.components.binary_sensor import BinarySensorDevice as BinarySensorEntity
+    from homeassistant.components.binary_sensor import \
+        BinarySensorDevice as BinarySensorEntity
 
 CONF_UPDATE_INTERVAL = 'update_interval'
 CONF_PLAYERS = 'players'
@@ -338,14 +353,6 @@ class ZwiftData:
         return False
 
     async def _connect(self):
-        # we need to patch the zwift protobuf as the upstream
-        # library has not yet been updated (9/16/2023)
-        import sys
-        from .zwift_patch import zwift_messages_pb2 as new_pb2
-        sys.modules['zwift.zwift_messages_pb2'] = new_pb2
-        # evil patch ends here
-
-        from zwift import Client as ZwiftClient
         client = ZwiftClient(self.username, self.password)
         if await self.check_zwift_auth(client):
             self._client = client
@@ -356,7 +363,6 @@ class ZwiftData:
         return self._client.get_profile().profile
 
     def update(self):
-        from zwift.error import RequestException
         if self._client:
             world = self._client.get_world(1)
             for player_id in self.players:
