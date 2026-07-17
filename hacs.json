@@ -1,5 +1,5 @@
 {
   "name": "Zwift Sensors",
-  "domains": ["sensor"],
+  "domains": ["image", "light", "number", "sensor", "switch"],
   "homeassistant": "2023.4"
 }

@@ -1,0 +1,87 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Zwift Account",
+                "description": "Enter your Zwift credentials.",
+                "data": {
+                    "username": "Username",
+                    "password": "Password"
+                }
+            },
+            "select_players": {
+                "title": "Select Players",
+                "description": "Choose players to track from your followees, or add custom player IDs.",
+                "data": {
+                    "players": "Players to track",
+                    "include_self": "Include own profile"
+                }
+            }
+        },
+        "error": {
+            "invalid_auth": "Invalid authentication",
+            "cannot_connect": "Failed to connect to Zwift"
+        },
+        "abort": {
+            "already_configured": "This Zwift account is already configured"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Zwift Players",
+                "description": "Select players to track from your followees, or add custom player IDs.",
+                "data": {
+                    "players": "Players to track",
+                    "include_self": "Include own profile"
+                }
+            }
+        }
+    },
+    "device_automation": {
+        "trigger_type": {
+            "ride_on": "Ride On received"
+        }
+    },
+    "issues": {
+        "deprecated_yaml_sensor_platform": {
+            "title": "Zwift YAML configuration is deprecated",
+            "description": "The `sensor:` platform configuration for Zwift in configuration.yaml has been imported and is no longer needed. You can safely remove the `sensor: - platform: zwift` block from configuration.yaml; the integration will continue to work from the imported config entry under Settings > Devices & Services."
+        },
+        "deprecated_yaml_domain_config": {
+            "title": "Zwift YAML configuration is deprecated",
+            "description": "The `zwift:` configuration in configuration.yaml has been imported and is no longer needed. You can safely remove the `zwift:` block from configuration.yaml; the integration will continue to work from the imported config entry under Settings > Devices & Services."
+        }
+    },
+    "entity": {
+        "switch": {
+            "enable_polling": {
+                "name": "Enable polling"
+            }
+        },
+        "number": {
+            "update_interval": {
+                "name": "Update interval"
+            }
+        },
+        "sensor": {
+            "powerzonename": {
+                "state": {
+                    "active_recovery": "Active Recovery",
+                    "endurance": "Endurance",
+                    "tempo": "Tempo",
+                    "threshold": "Threshold",
+                    "vo2max": "VO2max",
+                    "anaerobic": "Anaerobic",
+                    "neuromuscular": "Neuromuscular"
+                }
+            },
+            "sport": {
+                "state": {
+                    "cycling": "Cycling",
+                    "running": "Running"
+                }
+            }
+        }
+    }
+}
