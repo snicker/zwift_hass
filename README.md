@@ -30,6 +30,9 @@ Each tracked player is represented as a **device** in Home Assistant, named usin
 
 * A link to the player's Zwift profile at `zwift.com/athlete/<player_id>`
 * A **Profile Picture** image entity
+* A **Power Zone Color** light entity, which turns on and takes the color of the player's current power zone while they're riding (grey/blue/green/yellow/orange/red/purple)
+* An **Update Interval** number entity (config), letting you change how often that player is polled without editing YAML
+* An **Enable Polling** switch entity (config), letting you pause/resume polling for that player without removing them
 
 The following **sensor entities** are created per player:
 
@@ -56,6 +59,14 @@ The following **sensor entities** are created per player:
 | Racing Score | Sensor | Competition racing score |
 | Racing Category | Sensor | Racing category (uses women's category when applicable) |
 | FTP | Sensor | Functional Threshold Power (W) |
+| Weight | Sensor | Rider weight (lb / kg) |
+| Height | Sensor | Rider height (ft / m) |
+| Date of Birth | Sensor | Rider's date of birth (own profile only) |
+| Age | Sensor | Rider's current age |
+| Account Created | Sensor | When the Zwift account was created |
+| Power Zone | Sensor | Current power zone number (1–7) |
+| Power Zone Name | Sensor | Current power zone name (e.g. Threshold, VO2 Max) |
+| Sport | Sensor | Current sport (cycling / running) |
 
 Managing Players
 ===

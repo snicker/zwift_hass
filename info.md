@@ -1,4 +1,4 @@
-This adds the component to include Zwift sensors in your Home Assistant instance!
+This adds the component to include Zwift sensors in your Home Assistant instance! Each tracked player gets its own device with 29 sensors (speed, power, HR, distance, FTP, streaks, and more), plus a profile picture, a power-zone color light, and config controls for per-player polling.
 
 Installation
 ===
